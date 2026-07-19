@@ -1,0 +1,7 @@
+name = "manihala-elementary-school"
+pages_build_output_dir = "."
+compatibility_date = "2026-07-19"
+
+[[kv_namespaces]]
+binding = "SCHOOL_DATA"
+id = "66fb9fdc69364dc48cf278f7b0a29a2b"

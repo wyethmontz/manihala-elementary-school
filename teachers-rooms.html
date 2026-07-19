@@ -14,12 +14,16 @@
   <p class="meta">Number of teachers against number of classrooms, by grade level.</p>
 
   <section>
+    <div id="saveBar" style="display:none;align-items:center;gap:12px;margin-bottom:10px">
+      <button id="addRowBtn" style="background:transparent;border:1px solid var(--border);color:var(--text-primary);padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer">+ Add Grade Level</button>
+      <button id="saveBtn" style="background:var(--series-1);border:none;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer">Save Changes</button>
+      <span id="saveStatus" style="font-size:12px;color:var(--text-secondary)"></span>
+    </div>
     <div class="panel table-wrap" id="content"></div>
   </section>
 </div>
 
 <script src="data.js"></script>
-<script src="teachers-rooms-data.js"></script>
 <script src="nav.js"></script>
 <script src="teachers-rooms-page.js"></script>
 </body>
