@@ -10,6 +10,30 @@
     document.getElementById("saveBar").style.display = "flex";
   }
 
+  function renderSummaryTiles() {
+    const dlSum = downloadedSum(mooe);
+    const spent = spentSum(mooe);
+    const liqPct = dlSum ? (spent / dlSum * 100) : 0;
+    const over = spent > dlSum;
+    document.getElementById("summaryTiles").innerHTML = `
+      <div class="tile">
+        <div class="label">2026 Total MOOE Budget</div>
+        <div class="value">${money(mooe.budget)}</div>
+      </div>
+      <div class="tile">
+        <div class="label">Downloaded to Date</div>
+        <div class="value">${money(dlSum)}</div>
+      </div>
+      <div class="tile">
+        <div class="label">Spent to Date</div>
+        <div class="value">${money(spent)}</div>
+      </div>
+      <div class="tile">
+        <div class="label">Liquidation Rate</div>
+        <div class="value ${over ? 'critical' : 'good'}">${liqPct.toFixed(1)}%</div>
+      </div>`;
+  }
+
   // Tracks only the specific cells the admin actually edited, so Save can merge those
   // onto a freshly-fetched copy at save time instead of overwriting the whole record
   // with this page's (possibly stale) in-memory copy.
@@ -110,6 +134,7 @@
         }
         renderChart();
         renderTotalsOnly();
+        renderSummaryTiles();
       });
     }
   }
@@ -146,6 +171,7 @@
     cells[cells.length - 1].textContent = mooe.budget ? (grand/mooe.budget*100).toFixed(1)+'%' : "0.0%";
   }
 
+  renderSummaryTiles();
   renderChart();
   renderTable();
 
@@ -190,6 +216,7 @@
           statusEl.textContent = "Saved.";
           renderChart();
           renderTotalsOnly();
+          renderSummaryTiles();
         } else {
           statusEl.textContent = data.error || "Save failed.";
         }
