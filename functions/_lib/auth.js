@@ -116,7 +116,11 @@ async function isRateLimited(env, key, maxAttempts, windowSeconds) {
 function json(data, init) {
   return new Response(JSON.stringify(data), {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init && init.headers) }
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      ...(init && init.headers)
+    }
   });
 }
 

@@ -41,8 +41,7 @@
         calloutText += `${mooe.periods[i]} expenses (${money(totals[i])}) exceed the ${money(mooe.downloaded[i])} downloaded for that period by ${money(totals[i]-mooe.downloaded[i])}. `;
       }
     }
-    const lastRecorded = mooe.periods.filter((_,i) => totals[i] > 0).length;
-    const unrecorded = mooe.periods.slice(lastRecorded).join(", ");
+    const unrecorded = mooe.periods.filter((_,i) => totals[i] === 0 && mooe.downloaded[i] > 0).join(", ");
     if (unrecorded) {
       calloutText += `${unrecorded} show funds downloaded but no expenses logged yet — those periods read as gaps in the record, not confirmed zero spending.`;
     }
