@@ -65,7 +65,7 @@
         : `<td>${fmt(v)}</td>`;
     });
     const dlSum = downloadedSum(mooe);
-    tbody += `<td>${fmt(dlSum)}</td><td>100.0%</td></tr>`;
+    tbody += `<td>${fmt(dlSum)}</td><td>${mooe.budget ? (dlSum/mooe.budget*100).toFixed(1) : '0.0'}%</td></tr>`;
 
     mooe.categories.forEach(([name, exp], ci) => {
       const total = exp.reduce((a,b)=>a+b,0);
@@ -115,7 +115,9 @@
     rows.forEach((row, idx) => {
       if (idx === 0) {
         const cells = row.querySelectorAll("td");
-        cells[cells.length - 2].textContent = fmt(downloadedSum(mooe));
+        const dlSum = downloadedSum(mooe);
+        cells[cells.length - 2].textContent = fmt(dlSum);
+        cells[cells.length - 1].textContent = (mooe.budget ? (dlSum/mooe.budget*100).toFixed(1) : '0.0') + '%';
         return;
       }
       if (idx === rows.length - 1) return; // TOTAL EXPENSES row handled below
