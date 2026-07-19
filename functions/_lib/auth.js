@@ -85,14 +85,20 @@ async function verifyPassword(password, storedHash) {
   const [saltHex, iterationsStr, hashHex] = (storedHash || "").split(":");
   if (!saltHex || !iterationsStr || !hashHex) return false;
   const iterations = parseInt(iterationsStr, 10);
-  const salt = fromHex(saltHex);
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
-  );
-  const derived = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations, hash: "SHA-256" }, keyMaterial, 256
-  );
-  return constantTimeEqual(toHex(derived), hashHex);
+  // Cloudflare Workers' PBKDF2 implementation rejects iteration counts above 100000.
+  if (!Number.isInteger(iterations) || iterations <= 0 || iterations > 100000) return false;
+  try {
+    const salt = fromHex(saltHex);
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]
+    );
+    const derived = await crypto.subtle.deriveBits(
+      { name: "PBKDF2", salt, iterations, hash: "SHA-256" }, keyMaterial, 256
+    );
+    return constantTimeEqual(toHex(derived), hashHex);
+  } catch {
+    return false;
+  }
 }
 
 // Simple fixed-window rate limit backed by KV. Returns true if the request should be blocked.
