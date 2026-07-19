@@ -10,6 +10,12 @@
     document.getElementById("saveBar").style.display = "flex";
   }
 
+  // Tracks only the specific cells the admin actually edited, so Save can merge those
+  // onto a freshly-fetched copy at save time instead of overwriting the whole record
+  // with this page's (possibly stale) in-memory copy.
+  const dirtyDownloaded = new Set();
+  const dirtyCategories = new Set(); // keys "ci:pi"
+
   function renderChart() {
     const totals = periodTotals(mooe);
     const maxVal = Math.max(...mooe.downloaded, ...totals, 1);
@@ -97,8 +103,10 @@
         const val = Number(e.target.value) || 0;
         if (ci !== null && pi !== null) {
           mooe.categories[ci][1][pi] = val;
+          dirtyCategories.add(ci + ":" + pi);
         } else if (di !== null) {
           mooe.downloaded[di] = val;
+          dirtyDownloaded.add(Number(di));
         }
         renderChart();
         renderTotalsOnly();
@@ -144,18 +152,44 @@
   if (isAdmin) {
     document.getElementById("saveBtn").addEventListener("click", async () => {
       const statusEl = document.getElementById("saveStatus");
+      if (!dirtyDownloaded.size && !dirtyCategories.size) {
+        statusEl.textContent = "No changes to save.";
+        return;
+      }
       statusEl.textContent = "Saving...";
       try {
+        // Re-fetch the current server state right before saving, so any field this
+        // admin didn't touch is taken from the latest data, never from this page's
+        // own (possibly stale) copy — only the cells actually edited get applied.
+        const freshRes = await fetch("/api/mooe");
+        const fresh = await freshRes.json();
+
+        const mergedDownloaded = fresh.downloaded.slice();
+        dirtyDownloaded.forEach(i => { mergedDownloaded[i] = mooe.downloaded[i]; });
+
+        const mergedCategories = fresh.categories.map(([name, exp]) => [name, exp.slice()]);
+        dirtyCategories.forEach(key => {
+          const [ci, pi] = key.split(":").map(Number);
+          if (mergedCategories[ci]) mergedCategories[ci][1][pi] = mooe.categories[ci][1][pi];
+        });
+
         const res = await fetch("/api/mooe", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ budget: mooe.budget, downloaded: mooe.downloaded, categories: mooe.categories })
+          body: JSON.stringify({ budget: fresh.budget, downloaded: mergedDownloaded, categories: mergedCategories })
         });
         const data = await res.json();
         if (res.ok && data.ok) {
+          mooe.budget = fresh.budget;
+          mooe.downloaded = mergedDownloaded;
+          mooe.categories = mergedCategories;
           mooe.updatedAt = data.updatedAt;
+          dirtyDownloaded.clear();
+          dirtyCategories.clear();
           document.getElementById("footerStatus").textContent = "Data as of: " + formatUpdatedAt(mooe.updatedAt);
           statusEl.textContent = "Saved.";
+          renderChart();
+          renderTotalsOnly();
         } else {
           statusEl.textContent = data.error || "Save failed.";
         }
